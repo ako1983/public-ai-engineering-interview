@@ -1,0 +1,15 @@
+version: "3.9"
+services:
+  backend-python:
+    build:
+      context: .
+      dockerfile: ./backend/python/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/python:/app
+      - ./synthea:/app/synthea
+  frontend:
+    build: "./frontend"
+    ports:
+      - "3000:3000"

@@ -1,0 +1,115 @@
+import traceback
+from http.client import HTTPException
+from tracemalloc import start
+from typing import Optional
+from vital import Client
+from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+import os
+from dotenv import load_dotenv
+from services.chat_agent import get_chat_agent
+from services.emr_parser import initialize_emr_data
+load_dotenv()
+
+app = FastAPI()
+VITAL_API_KEY = os.getenv("VITAL_API_KEY")
+VITAL_ENVIRONMENT = os.getenv("VITAL_ENV")
+VITAL_REGION = os.getenv("VITAL_REGION")
+
+client = Client(api_key=VITAL_API_KEY, environment=VITAL_ENVIRONMENT, region=os.getenv("VITAL_REGION"))
+
+app.add_middleware(  # type: ignore
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize EMR data when the application starts"""
+    try:
+        initialize_emr_data()
+        print("✅ EMR data initialized successfully")
+    except Exception as e:
+        print(f"⚠️  Warning: Failed to initialize EMR data: {e}")
+        print(f"Traceback: {traceback.format_exc()}")
+
+
+@app.get("/token/{user_key}")
+def get_token(user_key: str):
+    return client.Link.create(user_key)
+
+
+class CreateUserData(BaseModel):
+    client_user_id: str
+
+
+class ChatMessage(BaseModel):
+    message: str
+
+
+@app.post("/user/")
+def create_user(data: CreateUserData):
+    return client.User.create(data.client_user_id)
+
+
+@app.get("/users/")
+def get_users():
+    return client.User.get_all()
+
+
+@app.get("/summary/{data_type}/{user_id}")
+def get_users(data_type: str, user_id: str, start_date: str, end_date: str):
+    func_map = {
+        "sleep": client.Sleep.get,
+        "activity": client.Activity.get,
+        "body": client.Body.get,
+        "workouts": client.Workouts.get,
+    }
+    func = func_map.get(data_type)
+    if not func:
+        raise HTTPException(400, "Failed to find data type")
+    data = func(user_id, start_date, end_date)
+    return data
+
+
+@app.get("/summary/{user_id}")
+def get_users(user_id: str, start_date: str, end_date: str):
+    sleep = client.Sleep.get(user_id, start_date, end_date)
+    activity = client.Activity.get(user_id, start_date, end_date)
+    body = client.Body.get(user_id, start_date, end_date)
+    workouts = client.Workouts.get(user_id, start_date, end_date)
+    return {"sleep": sleep, "activity": activity, "body": body, "workouts": workouts}
+
+
+# Chat Endpoint
+@app.post("/chat/{user_id}")
+def chat_with_assistant(user_id: str, message: ChatMessage):
+    """
+    Chat with AI Health Assistant using LangChain agent.
+    
+    The agent can:
+    - Analyze health data from EMR and wearables
+    - Provide personalized health insights
+    - Answer questions about chronic conditions
+    
+    Args:
+        user_id: Vital user ID
+        message: User's chat message
+        
+    Returns:
+        dict: AI assistant response
+    """
+    try:
+        chat_agent = get_chat_agent()
+        response = chat_agent.chat(user_id, message.message)
+        return {"message": response, "user_id": user_id}
+    except Exception as e:
+        error_traceback = traceback.format_exc()
+        print(f"Chat error: {str(e)}")
+        print(f"Traceback: {error_traceback}")
+        return {"message": f"I apologize, but I'm experiencing technical difficulties. Please try again later. Error: {str(e)}", "user_id": user_id}
