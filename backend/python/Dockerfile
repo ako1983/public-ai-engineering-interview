@@ -12,7 +12,6 @@ RUN pip install 'poetry==1.3.2'
 
 # Copy only the files needed for dependency installation
 COPY backend/python/pyproject.toml backend/python/poetry.lock ./
-COPY backend/python/.env .env
 
 # Copy the Python source code
 COPY backend/python/services ./services

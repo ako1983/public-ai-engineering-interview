@@ -1,1 +1,1 @@
-cp .env ./backend/python/ && cat .env | sed -e s/VITAL_/NEXT_PUBLIC_VITAL_/g > ./frontend/.env.local
+cp .env ./backend/python/ && grep -v -e '^VITAL_API_KEY=' -e '^OPENAI_API_KEY=' .env | sed -e 's/VITAL_/NEXT_PUBLIC_VITAL_/g' > ./frontend/.env.local

@@ -13,10 +13,10 @@ Once you have done this:
 cp .env.example .env
 
 # Fill all the env variables in the .env file
-VITAL_API_KEY=..
+VITAL_API_KEY=""
 VITAL_ENV=sandbox
 VITAL_REGION=us
-OPENAI_API_KEY=..
+OPENAI_API_KEY=""
 ```
 
 ## Step 2 - Run using Docker 

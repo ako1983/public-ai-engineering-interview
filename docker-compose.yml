@@ -9,6 +9,7 @@ services:
     volumes:
       - ./backend/python:/app
       - ./synthea:/app/synthea
+      - ./.env:/app/.env:ro
   frontend:
     build: "./frontend"
     ports:
