@@ -26,6 +26,6 @@ You can ignore most / all of the code within `frontend` as it merely creates the
 
 ## What's Already Implemented
 - The chat agent and its tool calling is implemented within `chat_agent.py`. Although `user_id` is passed, it is not used within the EMR data flow since we are relying on a single source of local data from `synthea/data` for the EMR records. It is worth noting that the `user_id` from the EMR record and Vital/Junction data do not match and that is okay for the sake of this sample application.
-- All of the data loading for the EMR sample data is done within `initialize_emr_data()` which calls `load_sample_synthea_data()`.
+- All of the data loading for the EMR sample data is done within `initialize_emr_data()` which calls `load_sample_synthea_data()`; `FHIR_README.md` and `SNOMED_CT_README.md` are provided for additional context.
 - Data from Vital/Junction is loaded within `get_heartrate_data` and `get_glucose_data`; a sample format of this data is within the `GLUCOSE_README.md` and `HEARTRATE_README.md` for your reference.
-- I have scaffolded in `tests/` which will allow you to test the individual functions outside of the chat flow.
+- I have scaffolded in `tests/` which will allow you to execute the individual functions outside of the chat flow.
